@@ -1,0 +1,83 @@
+Skills to use for this build:
+/executing-plans
+/frontend-design
+/test-driven-development
+/verification-before-completion
+
+---
+
+Context:
+This is the Wenexus Full-Stack Developer take-home assignment. You are
+building an Event Booking System: NestJS + PostgreSQL + Redis/BullMQ backend,
+React+TypeScript frontend. Full requirements, phase breakdown, and
+non-negotiables are in docs\IMPLEMENTATION_PLAN.md. Operating rules for how you
+should work are in docs\AI_AGENT_PROMPT.md. Current status is tracked in
+docs\PROGRESS.md.
+
+Before writing any code:
+1. Read docs\IMPLEMENTATION_PLAN.md in full.
+2. Read docs\AI_AGENT_PROMPT.md in full — these are your working rules, not
+   suggestions.
+3. Read docs\PROGRESS.md to confirm current state (it should currently show
+   everything as not started).
+
+How to execute:
+- Use /executing-plans to drive this session. Treat docs\IMPLEMENTATION_PLAN.md
+  as the authoritative plan. Work through phases 0 → 9 in order. Do not
+  skip ahead, do not parallelize unrelated phases, do not batch multiple
+  phases into one sitting.
+- For Phase 5 (concurrency safety and idempotency) and Phase 8 (automated
+  tests), use /test-driven-development: write the failing test first
+  (e.g. fire N concurrent booking requests against an event with fewer
+  seats than N and assert confirmed seats never exceed availability),
+  then implement until it passes. Do not write the concurrency-safe logic
+  first and backfill a test to match it.
+- For Phase 7 (frontend dashboard), use /frontend-design to make sensible
+  layout and UX decisions, while respecting the spec's note that visual
+  design is not evaluated — plain and clean, not sloppy.
+- Before marking any individual task, or any phase, as complete, use
+  /verification-before-completion. Concretely this means:
+  - Actually run the code (build, start the servers, hit the endpoints)
+  - For the overbooking requirement specifically: do not check that box
+    until you have run a real concurrent-request test and directly
+    observed that confirmed seats never exceed total_seats — not just
+    that the code "looks correct"
+  - For the duplicate requestId requirement: submit the same requestId
+    twice against a running instance and confirm only one booking exists
+  - Do not accept "it compiles" or "it should work" as sufficient evidence
+
+Process discipline:
+- One task at a time, in the order laid out in docs\IMPLEMENTATION_PLAN.md.
+- After completing each task:
+  1. Verify it (per above)
+  2. Check the box in docs\IMPLEMENTATION_PLAN.md
+  3. Update docs\PROGRESS.md — update the phase status table, add a dated
+     entry to the Task-Level Log describing what was done and how it was
+     verified, and record the git commit reference
+  4. Make a single, clearly-scoped git commit for that task (conventional
+     commit style, e.g. "feat: add booking DTO validation"). Do not
+     bundle multiple unrelated changes into one commit.
+- If you hit a genuine ambiguity in the spec (e.g. exact pagination
+  defaults, exact retry/backoff parameters), make a reasonable decision,
+  log it under "Decisions Log" in docs\PROGRESS.md with your reasoning, and
+  keep moving. Only stop and ask me if something is truly blocking
+  (e.g. conflicting requirements that can't both be satisfied).
+- If you get blocked for any other reason, log it under "Blockers /
+  Open Questions" in docs\PROGRESS.md and tell me directly rather than
+  guessing silently.
+
+Definition of done (do not declare the project complete until all of
+these are independently verified, not just implemented):
+- A fresh clone, following README.md only, successfully: starts
+  Postgres + Redis via docker-compose, runs migrations, seeds data,
+  starts backend and frontend
+- The concurrency test has been run at least 2-3 times and passes
+  reproducibly — no overbooking under parallel load
+- The duplicate-requestId test passes
+- Git log shows real incremental commits mapping to individual tasks,
+  not one bulk commit at the end
+- README.md clearly explains the overbooking prevention approach, the
+  idempotency approach, and what you'd improve with more time
+
+Start now with Phase 0. Your first action should be updating docs\PROGRESS.md
+to mark the project as started, then proceed to scaffolding.
