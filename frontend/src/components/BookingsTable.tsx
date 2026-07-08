@@ -15,8 +15,8 @@ export function BookingsTable({ bookings, events }: Props) {
     {
       header: 'Reference',
       render: (booking) => (
-        <span className="mono" title={booking.id}>
-          {formatReferenceId(booking.id)}
+        <span className="mono" title={booking.bookingReference}>
+          {formatReferenceId(booking.bookingReference)}
         </span>
       ),
     },
@@ -51,7 +51,7 @@ export function BookingsTable({ bookings, events }: Props) {
     <Table
       data={bookings}
       columns={columns}
-      keyExtractor={(booking) => booking.id}
+      keyExtractor={(booking) => booking.bookingReference}
       emptyMessage="No bookings match these filters yet."
     />
   );
