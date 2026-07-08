@@ -16,7 +16,10 @@ async function unwrap<T>(res: Response): Promise<T> {
     }
     throw new Error(message);
   }
-  return res.json() as Promise<T>;
+  // Tolerate an empty body (e.g. a 202/204 with no payload) instead of throwing
+  // on `res.json()`; callers that need the body get it, others get undefined.
+  const text = await res.text();
+  return (text ? (JSON.parse(text) as T) : (undefined as T));
 }
 
 export function fetchEvents(): Promise<EventDto[]> {

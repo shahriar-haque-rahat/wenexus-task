@@ -15,7 +15,7 @@ export default function App() {
   const [eventId, setEventId] = useState<number | ''>('');
   const [status, setStatus] = useState('');
   const [result, setResult] = useState<PaginatedResponse<BookingDto> | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pollingBookingId, setPollingBookingId] = useState<string | null>(null);
 
@@ -57,12 +57,18 @@ export default function App() {
   }, [loadBookings]);
 
   // Scoped polling: after a booking is submitted, poll ONLY that specific booking's status
-  // every 1.5s, and STOP polling as soon as it leaves PENDING.
+  // every 1.5s, and STOP polling as soon as it leaves PENDING. A transient fetch error is
+  // NOT a terminal state, so it does not stop the poll; a bounded attempt cap guarantees the
+  // poll can never run forever if the booking never settles server-side.
+  const POLL_INTERVAL_MS = 1500;
+  const MAX_POLL_ATTEMPTS = 40; // ~60s, then give up and let the user refresh manually
   useEffect(() => {
     if (!pollingBookingId) return;
 
     let isActive = true;
+    let attempts = 0;
     const runPoll = async () => {
+      attempts += 1;
       try {
         const booking = await fetchBookingById(pollingBookingId);
         if (!isActive) return;
@@ -73,7 +79,7 @@ export default function App() {
             if (!prev) return null;
             return {
               ...prev,
-              data: prev.data.map((b) => (b.id === booking.id ? booking : b)),
+              data: prev.data.map((b) => (b.bookingReference === booking.bookingReference ? booking : b)),
             };
           });
 
@@ -83,18 +89,20 @@ export default function App() {
             // Refresh dashboard (silent) to ensure general counts and sibling pages match
             void loadBookings({ silent: true });
             void loadEvents();
+            return;
           }
         }
       } catch {
-        if (isActive) {
-          setPollingBookingId(null);
-        }
+        // Transient error (network blip / momentary 5xx) — keep polling; do not terminate.
+      }
+      if (attempts >= MAX_POLL_ATTEMPTS && isActive) {
+        setPollingBookingId(null);
       }
     };
 
     const timerId = setInterval(() => {
       void runPoll();
-    }, 1500);
+    }, POLL_INTERVAL_MS);
 
     // Initial check right away
     void runPoll();
@@ -116,9 +124,25 @@ export default function App() {
     void loadEvents();
   };
 
-  const handleBookingCreated = (bookingId: string) => {
-    setPollingBookingId(bookingId);
-    refreshAll();
+  const handleBookingCreated = (booking: BookingDto) => {
+    // A new booking is always PENDING and the newest row (list is createdAt DESC), so it
+    // belongs on page 1 with no filters. Reset the view and optimistically insert it so the
+    // user can immediately see it — and watch the scoped poll settle it — even if they were
+    // on another page or had a filter that would otherwise hide a PENDING booking.
+    setEventId('');
+    setStatus('');
+    setPage(1);
+    setResult((prev) =>
+      prev
+        ? {
+            ...prev,
+            data: [booking, ...prev.data.filter((b) => b.bookingReference !== booking.bookingReference)].slice(0, PAGE_LIMIT),
+            total: prev.data.some((b) => b.bookingReference === booking.bookingReference) ? prev.total : prev.total + 1,
+          }
+        : prev,
+    );
+    setPollingBookingId(booking.bookingReference);
+    void loadEvents();
   };
 
   return (

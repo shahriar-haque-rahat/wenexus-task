@@ -438,6 +438,15 @@ select:focus {
   background: #f9fafb;
 }
 
+.custom-select-trigger--error {
+  border-color: #fda29b;
+}
+
+.custom-select-trigger--error:focus {
+  border-color: #f04438;
+  box-shadow: 0 0 0 3px rgba(240, 68, 56, 0.15);
+}
+
 .custom-select-arrow {
   font-size: 0.75rem;
   color: var(--muted);
@@ -474,8 +483,9 @@ select:focus {
   user-select: none;
 }
 
-/* Apply hover states ONLY to options that are NOT selected */
-.custom-select-option:not(.custom-select-option--selected):hover {
+/* Apply hover/keyboard-active states ONLY to options that are NOT selected */
+.custom-select-option:not(.custom-select-option--selected):hover,
+.custom-select-option--active:not(.custom-select-option--selected) {
   background: #f3f4f6;
   color: var(--text);
 }
