@@ -5,6 +5,8 @@ import { BookingsTable } from './components/BookingsTable';
 import { FiltersBar } from './components/FiltersBar';
 import { Pagination } from './components/Pagination';
 import { Button } from './components/ui/Button';
+import { EmptyState } from './components/ui/EmptyState';
+import { Spinner } from './components/ui/Spinner';
 import type { BookingDto, EventDto, PaginatedResponse } from './types';
 
 const PAGE_LIMIT = 10;
@@ -164,10 +166,10 @@ export default function App() {
 
         <FiltersBar events={events} eventId={eventId} status={status} onChange={onFilterChange} />
 
-        {error && <div className="alert alert--error">{error}</div>}
+        {error && result && <div className="alert alert--error">{error}</div>}
 
         {loading && !result ? (
-          <div className="empty">Loading bookings…</div>
+          <Spinner size="md" />
         ) : result && result.data.length > 0 ? (
           <>
             <BookingsTable bookings={result.data} events={events} />
@@ -179,7 +181,10 @@ export default function App() {
             />
           </>
         ) : (
-          <div className="empty">No bookings match these filters yet.</div>
+          <EmptyState
+            title="No bookings found"
+            description={eventId || status ? 'Try adjusting your filters.' : 'Submit a booking above to get started.'}
+          />
         )}
       </section>
     </div>

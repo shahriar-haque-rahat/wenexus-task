@@ -140,6 +140,36 @@ what was done to close each gap (all fixed, re-verified, and committed):
 ## Task-Level Log
 _(append entries here as each task is completed — newest at the top)_
 
+### [2026-07-08] Visual polish: design tokens, EmptyState component, consistent spacing/typography
+- What was done:
+  1. Expanded CSS custom properties into a full design-token system:
+     - Status colors (`--pending`, `--confirmed`, `--failed` + bg/border variants)
+     - Accent feedback colors (`--error`, `--error-bg`, `--error-border`)
+     - Radii scale (`--radius-sm/md/lg/xl/full`)
+     - Spacing scale (`--space-xs/sm/md/lg/xl/2xl/3xl`)
+     - Typography scale (`--font-xs/sm/base/lg/xl`)
+     - Shadow scale (`--shadow-sm/md/lg`)
+     - Focus ring (`--focus-ring`), accent light (`--accent-light`)
+  2. Applied tokens consistently across all CSS sections (layout, panels, forms,
+     buttons, filters, table, badges, inputs, selects, modals, spinner, alerts,
+     empty states, pagination), replacing every raw hex/px/rem value.
+  3. Created reusable `EmptyState` component in `ui/EmptyState.tsx` (icon, title,
+     description, action slots) used by `Table.tsx` and `App.tsx`.
+  4. Table.tsx now shows a centered spinner during loading (instead of a table
+     cell with "Loading...") and the EmptyState component when there are zero rows.
+  5. App.tsx uses `<Spinner>` for initial load and `<EmptyState>` for the
+     no-bookings state with contextual description (filter vs. fresh-start).
+  6. Ghost button hover now has a subtle background fill.
+  7. Modal footer background uses `--bg` instead of hardcoded `#f9fafb`.
+  8. Badge dot slightly smaller (5px), badge vertical alignment tightened.
+- Verification performed:
+  - `npx tsc --noEmit` — 0 errors
+  - `npx vite build` — production build succeeds (11 KB CSS, 202 KB JS)
+  - `npm test` (backend) — 24/24 pass
+  - `GET /health`, `GET /events` — respond normally (no backend changes)
+- No backend logic touched; no ui/ component behaviour changed (only CSS tokens).
+- Commit suggestion: `feat: establish design token system, EmptyState component, visual polish`
+
 ### [2026-07-08] UX: event dropdown shows seats + price; FAILED reason visible inline
 - What was done:
   1. Added `formatCents()` helper to `frontend/src/utils/format.ts` (15000 → "$150.00").

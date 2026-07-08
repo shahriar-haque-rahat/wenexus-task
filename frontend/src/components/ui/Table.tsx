@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { EmptyState } from './EmptyState';
 
 export interface Column<T> {
   header: ReactNode;
@@ -35,19 +36,7 @@ export function Table<T>({
           </tr>
         </thead>
         <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={columns.length} className="empty">
-                Loading...
-              </td>
-            </tr>
-          ) : data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="empty">
-                {emptyMessage}
-              </td>
-            </tr>
-          ) : (
+          {!loading && data.length > 0 && (
             data.map((item, idx) => (
               <tr key={keyExtractor(item, idx)}>
                 {columns.map((col, colIdx) => (
@@ -60,6 +49,14 @@ export function Table<T>({
           )}
         </tbody>
       </table>
+      {loading && (
+        <div className="empty-state">
+          <div className="spinner spinner--md" />
+        </div>
+      )}
+      {!loading && data.length === 0 && (
+        <EmptyState title={typeof emptyMessage === 'string' ? emptyMessage : 'No results'} />
+      )}
     </div>
   );
 }
