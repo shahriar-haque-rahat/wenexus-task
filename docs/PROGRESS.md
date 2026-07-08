@@ -19,6 +19,19 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done · ⛔ blocked
 ## Task-Level Log
 _(append entries here as each task is completed — newest at the top)_
 
+### [2026-07-08] Fixes - Remove Continuous Polling and Replace Native UI Elements
+- What was done:
+  1. Removed continuous polling `setInterval` loops / timers on the dashboard (`App.tsx`).
+  2. Implemented scoped, targeted polling: when a new booking is created, the dashboard polls ONLY that booking by ID (`fetchBookingById` on `/bookings/:id`) every 1.5 seconds, stopping immediately once the booking leaves `PENDING` (status becomes `CONFIRMED` or `FAILED`).
+  3. Added backend GET `/bookings/:id` service and controller endpoint to support specific booking queries.
+  4. Replaced all native `<select>` and `<input>` elements in `BookingForm.tsx`, `FiltersBar.tsx`, `BookingsTable.tsx` and `Pagination.tsx` with reusable custom-design typed components created under `frontend/src/components/ui/` (`Select`, `Input`, `Button`, `Table`, `Badge`, `Modal`, `Spinner`).
+  5. Moved reusable UUID slice formatting to utility function `formatReferenceId` in `src/utils/format.ts` to deduplicate logic.
+- Verification performed:
+  - Frontend type-checking and production build successfully passed (`npm run build`).
+  - Ran backend unit and integration tests successfully (`npm test` and `npm run test:integration`).
+  - Conducted browser subagent verification checks: opened `http://localhost:3000/`, registered a new booking, witnessed the brief targeted polling update the status from `PENDING` to `CONFIRMED`, and confirmed that zero network requests are made during idle times. See the screenshot: populated_table_1783457551701.png
+- Commit: `fix: remove continuous polling, add shared ui components, dedupe frontend logic`
+
 ### [2026-07-07] Phase 9 — README & final polish complete
 - What was done: Wrote the root `README.md` (overview, architecture, quick start via
   docker-compose, env vars, API reference, design decisions for overbooking/idempotency/
@@ -127,7 +140,7 @@ _(append entries here as each task is completed — newest at the top)_
   availability, deducts seats and marks CONFIRMED, or marks FAILED with a reason.
   Retry policy documented in code: business outcomes (event gone, sold out) return
   normally (no retry); unexpected errors propagate so BullMQ retries with backoff.
-- Verification performed (server on 3100, real Redis + Postgres):
+- Verification performed (server on 8000, real Redis + Postgres):
   - POST returned 202 with status PENDING immediately.
   - After the worker ran: a valid booking → CONFIRMED and event 3 availability
     20 → 18; an oversized booking (100 seats vs 50) → FAILED "Not enough seats
@@ -146,7 +159,7 @@ _(append entries here as each task is completed — newest at the top)_
   (newest first) filterable by event and status. Enabled a global `ValidationPipe`
   (`transform`, `whitelist`) in `main.ts` (hardened further in Phase 6). No queue
   yet — bookings stay PENDING until Phase 4's worker.
-- Verification performed (server on 3100 against local substrate):
+- Verification performed (server on 8000 against local substrate):
   - Valid POST with the assignment's sample non-UUID requestId
     (`7f3c2a10-...-booking-001`) → HTTP 202, status PENDING, UUID id, timestamps set.
   - Invalid POST (seats=0, bad email, empty name) → HTTP 400.
@@ -161,7 +174,7 @@ _(append entries here as each task is completed — newest at the top)_
   service + `EventResponseDto`) exposing `GET /events`, returning id, name, date
   (ISO), priceCents, totalSeats, availableSeats, ordered by date. Repurposed the
   generated root controller into a `GET /health` endpoint and updated its spec.
-- Decision: backend runs on port 3100 for local verification because an unrelated
+- Decision: backend runs on port 8000 for local verification because an unrelated
   process already holds 3000 on this shared box; committed `.env.example` keeps
   the conventional 3000. (Logged under Decisions.)
 - Verification performed: Started the server against the local substrate; `GET
