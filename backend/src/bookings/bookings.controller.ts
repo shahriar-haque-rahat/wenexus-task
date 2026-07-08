@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { PaginatedResponse } from '../common/dto/paginated-response.dto';
 import { BookingsService } from './bookings.service';
 import { BookingResponseDto } from './dto/booking-response.dto';
@@ -20,4 +20,10 @@ export class BookingsController {
   findAll(@Query() query: QueryBookingsDto): Promise<PaginatedResponse<BookingResponseDto>> {
     return this.bookingsService.findAll(query);
   }
+
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<BookingResponseDto> {
+    return this.bookingsService.findOne(id);
+  }
 }
+

@@ -21,7 +21,7 @@ async function bootstrap() {
   // Consistent JSON error shape for every unhandled exception.
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  const port = process.env.PORT ?? 3000;
+  const port = process.env.PORT ?? 8000;
   await app.listen(port);
 }
 void bootstrap();

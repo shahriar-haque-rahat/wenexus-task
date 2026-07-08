@@ -131,4 +131,13 @@ export class BookingsService {
       totalPages: Math.ceil(total / limit),
     };
   }
+
+  async findOne(id: string): Promise<BookingResponseDto> {
+    const booking = await this.bookingsRepository.findOne({ where: { id } });
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID ${id} not found`);
+    }
+    return BookingResponseDto.fromEntity(booking);
+  }
 }
+
