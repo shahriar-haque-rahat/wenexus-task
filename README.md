@@ -49,19 +49,44 @@ availability checks and seat deduction happen in the worker.
 
 From the repository root:
 
-```bash
-# 1. Start PostgreSQL (5432) and Redis (6379)
-docker compose up -d
+### 1. Start PostgreSQL and Redis
 
-# 2. Backend
+**Option A — Docker (recommended):**
+```bash
+docker compose up -d      # PostgreSQL on 5432, Redis on 6379
+```
+
+**Option B — Using your own local PostgreSQL/Redis (no Docker):**
+
+If you don't have Docker installed, or already run these locally, skip Option A and instead:
+
+1. Make sure PostgreSQL is running, then create the database:
+```bash
+createdb event_booking
+# or: psql -U postgres -c "CREATE DATABASE event_booking;"
+```
+
+2. Make sure Redis is running (default port `6379`).
+
+3. In `backend/.env` (created in step 2 below), update the connection settings to point at your local instances instead of the Docker defaults, e.g.:
+```
+DATABASE_URL=postgresql://<your_user>:<your_password>@localhost:5432/event_booking
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+### 2. Backend
+```bash
 cd backend
-cp .env.example .env          # defaults already match docker-compose
+cp .env.example .env          # defaults already match docker-compose (edit if using Option B above)
 npm install
 npm run migration:run         # create the schema
 npm run seed                  # insert 3 sample events
 npm run start                 # API on http://localhost:8000  (worker starts with it)
+```
 
-# 3. Frontend (in a second terminal)
+### 3. Frontend (in a second terminal)
+```bash
 cd frontend
 cp .env.example .env          # VITE_API_URL=http://localhost:8000
 npm install
