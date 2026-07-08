@@ -4,7 +4,7 @@ import type { BookingDto, EventDto } from '../types';
 import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
-import { formatReferenceId } from '../utils/format';
+import { formatCents, formatReferenceId } from '../utils/format';
 
 interface Props {
   events: EventDto[];
@@ -83,7 +83,7 @@ export function BookingForm({ events, onCreated }: Props) {
     { value: '' as const, label: 'Select an event…' },
     ...events.map((ev) => ({
       value: ev.id,
-      label: `${ev.name} — ${ev.availableSeats}/${ev.totalSeats} seats left`,
+      label: `${ev.name} — ${ev.availableSeats} seats left — ${formatCents(ev.priceCents)}/seat`,
       disabled: ev.availableSeats <= 0,
     })),
   ];

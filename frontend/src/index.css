@@ -283,6 +283,18 @@ select:focus {
   background: #fee4e2;
 }
 
+/* Status cell (badge + inline reason) ------------------------------------- */
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-cell__reason {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 /* Pagination + states ----------------------------------------------------- */
 .pagination {
   display: flex;

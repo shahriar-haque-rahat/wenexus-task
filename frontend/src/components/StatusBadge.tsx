@@ -9,9 +9,12 @@ interface Props {
 export function StatusBadge({ status, reason }: Props) {
   const variant = status.toLowerCase() as 'pending' | 'confirmed' | 'failed';
   return (
-    <Badge variant={variant} title={reason ?? undefined}>
-      {status}
-    </Badge>
+    <span className="status-cell">
+      <Badge variant={variant} title={reason ?? undefined}>
+        {status}
+      </Badge>
+      {status === 'FAILED' && reason && <span className="status-cell__reason">{reason}</span>}
+    </span>
   );
 }
 

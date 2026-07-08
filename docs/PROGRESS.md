@@ -140,6 +140,22 @@ what was done to close each gap (all fixed, re-verified, and committed):
 ## Task-Level Log
 _(append entries here as each task is completed — newest at the top)_
 
+### [2026-07-08] UX: event dropdown shows seats + price; FAILED reason visible inline
+- What was done:
+  1. Added `formatCents()` helper to `frontend/src/utils/format.ts` (15000 → "$150.00").
+  2. Updated event dropdown in `BookingForm.tsx` to show:
+     `"Tech Conference 2026 — 90 seats left — $150.00/seat"`.
+  3. Updated `StatusBadge.tsx` to render `failureReason` as inline italic text
+     next to the badge for FAILED bookings (in addition to the existing hover tooltip).
+  4. Added `.status-cell` / `.status-cell__reason` CSS classes.
+- Verification performed:
+  - Backend `POST /bookings` with 99 seats for a 20-seat event → booking created PENDING,
+    then asynchronously processed to FAILED with `failureReason: "Not enough seats available"`.
+  - `GET /bookings` returns the FAILED booking with the reason populated.
+  - TypeScript `--noEmit` passes cleanly for frontend.
+  - All 24 backend tests pass.
+- Commit suggestion: `feat: enrich event dropdown with seat count & price, show failure reason inline`
+
 ### [2026-07-08] Fixes — requestId moved server-side, duplicate protection via fingerprinting
 - What was done:
   1. Removed all frontend UUID generation: deleted `uuid.ts`, removed `requestId` state
