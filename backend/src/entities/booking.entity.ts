@@ -20,9 +20,11 @@ export enum BookingStatus {
  * A customer's request to book seats for an event.
  *
  * The `id` is a server-generated UUID and doubles as the public booking
- * reference returned by POST /bookings. `requestId` is a client-generated
- * idempotency key with a UNIQUE constraint, so re-submitting the same request
- * never creates a second booking.
+ * reference returned by POST /bookings. `requestId` is a server-generated UUID
+ * (one per incoming HTTP request, created by the controller). Duplicate
+ * detection is handled via request fingerprinting (eventId + customerEmail +
+ * seats within a 30-second window) rather than by the UNIQUE constraint on
+ * request_id, since the server now generates a fresh UUID per request.
  */
 @Entity({ name: 'bookings' })
 export class Booking {

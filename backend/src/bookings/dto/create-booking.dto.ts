@@ -3,17 +3,12 @@ import { IsEmail, IsInt, IsNotEmpty, IsPositive, IsString, MaxLength, Min } from
 /**
  * Body of `POST /bookings`.
  *
- * `requestId` is a client-generated idempotency key. It is validated as a
- * non-empty string (not a strict UUID): the assignment's own sample payload
- * uses a non-UUID value, and the spec only requires "a client-generated
- * requestId". See docs/PROGRESS.md (Decisions Log).
+ * `requestId` is NOT sent by the client — it is generated server-side by the
+ * controller using `crypto.randomUUID()`. Duplicate detection uses request
+ * fingerprinting: matching (eventId + customerEmail + seats) within a 30-second
+ * window. See README.md (Key design decisions).
  */
 export class CreateBookingDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(200)
-  requestId: string;
-
   @IsInt()
   @IsPositive()
   eventId: number;

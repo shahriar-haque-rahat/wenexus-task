@@ -1,10 +1,12 @@
 import { Booking, BookingStatus } from '../../entities/booking.entity';
 
 /**
- * Public shape of a booking. `id` is the booking reference returned to clients.
+ * Public shape of a booking. `bookingReference` (the entity's `id` PK) is the
+ * backend-generated booking reference returned to clients. `requestId` is a
+ * server-generated UUID (one per HTTP request), not a client-generated value.
  */
 export class BookingResponseDto {
-  id: string;
+  bookingReference: string;
   requestId: string;
   eventId: number;
   customerName: string;
@@ -17,7 +19,7 @@ export class BookingResponseDto {
 
   static fromEntity(booking: Booking): BookingResponseDto {
     return {
-      id: booking.id,
+      bookingReference: booking.id,
       requestId: booking.requestId,
       eventId: booking.eventId,
       customerName: booking.customerName,

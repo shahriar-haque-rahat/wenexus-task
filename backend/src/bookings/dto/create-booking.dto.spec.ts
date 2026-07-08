@@ -12,7 +12,6 @@ async function failingProps(payload: Record<string, unknown>): Promise<string[]>
 
 describe('CreateBookingDto validation', () => {
   const valid = {
-    requestId: 'req-1',
     eventId: 1,
     customerName: 'Jane Doe',
     customerEmail: 'jane@example.com',
@@ -21,12 +20,6 @@ describe('CreateBookingDto validation', () => {
 
   it('accepts a valid payload', async () => {
     expect(await failingProps(valid)).toEqual([]);
-  });
-
-  it('accepts the assignment sample non-UUID requestId', async () => {
-    expect(await failingProps({ ...valid, requestId: '7f3c2a10-9b1e-4d5a-8c6f-booking-001' })).toEqual(
-      [],
-    );
   });
 
   it('rejects an invalid email', async () => {
@@ -41,10 +34,6 @@ describe('CreateBookingDto validation', () => {
 
   it('rejects a non-integer seat count', async () => {
     expect(await failingProps({ ...valid, seats: 1.5 })).toContain('seats');
-  });
-
-  it('rejects an empty requestId', async () => {
-    expect(await failingProps({ ...valid, requestId: '' })).toContain('requestId');
   });
 
   it('rejects a missing customer name', async () => {

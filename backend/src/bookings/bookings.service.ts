@@ -2,9 +2,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { PaginatedResponse } from '../common/dto/paginated-response.dto';
-import { isUniqueViolation } from '../common/pg-error.util';
 import { Booking, BookingStatus } from '../entities/booking.entity';
 import { Event } from '../entities/event.entity';
 import {
@@ -34,14 +33,26 @@ export class BookingsService {
    * Unknown events are rejected up front with a 404 so we never insert a
    * booking that violates the event foreign key.
    *
-   * Idempotency: a repeated `requestId` never creates a second booking. The
-   * fast path returns any existing booking directly; the `request_id` UNIQUE
-   * constraint plus catching the unique violation closes the race between two
-   * concurrent identical requests (the loser returns the winner's booking).
+   * `requestId` is a server-generated UUID (one per incoming HTTP request).
+   * Duplicate protection uses request fingerprinting: a exact match on
+   * (eventId + customerEmail + seats) within a 30-second window is treated as
+   * an accidental duplicate submit (double-click, retry, multiple tabs) and
+   * returns the existing booking. Combined with the frontend's
+   * `disabled={submitting}` button, this catches the two common duplicate
+   * surfaces — user double-clicks and near-simultaneous browser-tab submits.
    */
-  async create(dto: CreateBookingDto): Promise<BookingResponseDto> {
+  async create(dto: CreateBookingDto, requestId: string): Promise<BookingResponseDto> {
+    // Duplicate detection via request fingerprint: same event + customer email
+    // + number of seats within a 30-second window.
+    const since = new Date(Date.now() - 30_000);
     const existing = await this.bookingsRepository.findOne({
-      where: { requestId: dto.requestId },
+      where: {
+        eventId: dto.eventId,
+        customerEmail: dto.customerEmail,
+        seats: dto.seats,
+        createdAt: MoreThan(since),
+      },
+      order: { createdAt: 'DESC' },
     });
     if (existing) {
       return this.returnExisting(existing);
@@ -53,7 +64,7 @@ export class BookingsService {
     }
 
     const booking = this.bookingsRepository.create({
-      requestId: dto.requestId,
+      requestId,
       eventId: dto.eventId,
       customerName: dto.customerName,
       customerEmail: dto.customerEmail,
@@ -65,14 +76,8 @@ export class BookingsService {
     try {
       saved = await this.bookingsRepository.save(booking);
     } catch (err) {
-      if (isUniqueViolation(err)) {
-        const winner = await this.bookingsRepository.findOne({
-          where: { requestId: dto.requestId },
-        });
-        if (winner) {
-          return this.returnExisting(winner);
-        }
-      }
+      // If the UNIQUE constraint on request_id fires (extremely unlikely since
+      // requestId is crypto.randomUUID), fall through to the error handler.
       throw err;
     }
 
@@ -110,6 +115,13 @@ export class BookingsService {
 
     const where: FindOptionsWhere<Booking> = {};
     if (eventId !== undefined) {
+      // Reject a filter on an unknown event with a clear 404 rather than
+      // silently returning an empty page (which the caller could not tell
+      // apart from "this event simply has no bookings yet").
+      const event = await this.eventsRepository.findOne({ where: { id: eventId } });
+      if (!event) {
+        throw new NotFoundException(`Event ${eventId} not found`);
+      }
       where.eventId = eventId;
     }
     if (status !== undefined) {

@@ -10,8 +10,7 @@ export interface EventDto {
 }
 
 export interface BookingDto {
-  id: string;
-  requestId: string;
+  bookingReference: string;
   eventId: number;
   customerName: string;
   customerEmail: string;
@@ -31,7 +30,6 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CreateBookingInput {
-  requestId: string;
   eventId: number;
   customerName: string;
   customerEmail: string;

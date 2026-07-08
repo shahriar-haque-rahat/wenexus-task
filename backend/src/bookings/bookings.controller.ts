@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import * as crypto from 'crypto';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PaginatedResponse } from '../common/dto/paginated-response.dto';
 import { BookingsService } from './bookings.service';
 import { BookingResponseDto } from './dto/booking-response.dto';
@@ -13,7 +24,8 @@ export class BookingsController {
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
   create(@Body() dto: CreateBookingDto): Promise<BookingResponseDto> {
-    return this.bookingsService.create(dto);
+    const requestId = crypto.randomUUID();
+    return this.bookingsService.create(dto, requestId);
   }
 
   @Get()
@@ -22,7 +34,7 @@ export class BookingsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<BookingResponseDto> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<BookingResponseDto> {
     return this.bookingsService.findOne(id);
   }
 }
