@@ -1,4 +1,5 @@
 import type { BookingStatus } from '../types';
+import { Badge } from './ui/Badge';
 
 interface Props {
   status: BookingStatus;
@@ -6,10 +7,11 @@ interface Props {
 }
 
 export function StatusBadge({ status, reason }: Props) {
+  const variant = status.toLowerCase() as 'pending' | 'confirmed' | 'failed';
   return (
-    <span className={`badge badge--${status.toLowerCase()}`} title={reason ?? undefined}>
-      <span className="badge__dot" aria-hidden="true" />
+    <Badge variant={variant} title={reason ?? undefined}>
       {status}
-    </span>
+    </Badge>
   );
 }
+

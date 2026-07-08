@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { createBooking } from '../api';
 import type { EventDto } from '../types';
+import { Select } from './ui/Select';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
+import { formatReferenceId } from '../utils/format';
 
 interface Props {
   events: EventDto[];
-  onCreated: () => void;
+  onCreated: (bookingId: string) => void;
 }
 
 type FormMessage = { type: 'ok' | 'err'; text: string };
@@ -41,16 +45,25 @@ export function BookingForm({ events, onCreated }: Props) {
       });
       setMessage({
         type: 'ok',
-        text: `Booking accepted — reference ${booking.id.slice(0, 8)}, status ${booking.status}.`,
+        text: `Booking accepted — reference ${formatReferenceId(booking.id)}, status ${booking.status}.`,
       });
       resetCustomer();
-      onCreated();
+      onCreated(booking.id);
     } catch (err) {
       setMessage({ type: 'err', text: err instanceof Error ? err.message : 'Failed to create booking' });
     } finally {
       setSubmitting(false);
     }
   };
+
+  const eventOptions = [
+    { value: '' as const, label: 'Select an event…' },
+    ...events.map((ev) => ({
+      value: ev.id,
+      label: `${ev.name} — ${ev.availableSeats}/${ev.totalSeats} seats left`,
+      disabled: ev.availableSeats <= 0,
+    })),
+  ];
 
   return (
     <section className="panel">
@@ -59,61 +72,55 @@ export function BookingForm({ events, onCreated }: Props) {
       </div>
       <form className="form" onSubmit={onSubmit}>
         <div className="form__row">
-          <label className="field field--grow">
-            <span>Event</span>
-            <select
-              value={eventId}
-              onChange={(e) => setEventId(e.target.value === '' ? '' : Number(e.target.value))}
-              required
-            >
-              <option value="">Select an event…</option>
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id} disabled={ev.availableSeats <= 0}>
-                  {ev.name} — {ev.availableSeats}/{ev.totalSeats} seats left
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field field--seats">
-            <span>Seats</span>
-            <input
-              type="number"
-              min={1}
-              value={seats}
-              onChange={(e) => setSeats(Math.max(1, Number(e.target.value)))}
-              required
-            />
-          </label>
+          <Select
+            label="Event"
+            value={eventId}
+            options={eventOptions}
+            onChange={(val) => setEventId(val === '' ? '' : Number(val))}
+            required
+            className="field field--grow"
+          />
+          <Input
+            id="booking-seats-input"
+            label="Seats"
+            type="number"
+            min={1}
+            value={seats}
+            onChange={(e) => setSeats(Math.max(1, Number(e.target.value)))}
+            required
+            className="field field--seats"
+          />
         </div>
         <div className="form__row">
-          <label className="field field--grow">
-            <span>Name</span>
-            <input
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              required
-              placeholder="Jane Doe"
-            />
-          </label>
-          <label className="field field--grow">
-            <span>Email</span>
-            <input
-              type="email"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-              required
-              placeholder="jane@example.com"
-            />
-          </label>
+          <Input
+            id="booking-customer-name-input"
+            label="Name"
+            type="text"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            required
+            placeholder="Jane Doe"
+            className="field field--grow"
+          />
+          <Input
+            id="booking-customer-email-input"
+            label="Email"
+            type="email"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            required
+            placeholder="jane@example.com"
+            className="field field--grow"
+          />
         </div>
         <div className="form__actions">
-          <button className="btn btn--primary" type="submit" disabled={submitting}>
-            {submitting ? 'Submitting…' : 'Book seats'}
-          </button>
+          <Button type="submit" disabled={submitting} loading={submitting}>
+            Book seats
+          </Button>
           {message && <span className={`form__msg form__msg--${message.type}`}>{message.text}</span>}
         </div>
       </form>
     </section>
   );
 }
+

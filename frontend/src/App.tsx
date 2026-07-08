@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { fetchBookings, fetchEvents } from './api';
+import { fetchBookings, fetchEvents, fetchBookingById } from './api';
 import { BookingForm } from './components/BookingForm';
 import { BookingsTable } from './components/BookingsTable';
 import { FiltersBar } from './components/FiltersBar';
 import { Pagination } from './components/Pagination';
+import { Button } from './components/ui/Button';
 import type { BookingDto, EventDto, PaginatedResponse } from './types';
 
 const PAGE_LIMIT = 10;
-const POLL_INTERVAL_MS = 3000;
 
 export default function App() {
   const [events, setEvents] = useState<EventDto[]>([]);
@@ -17,6 +17,7 @@ export default function App() {
   const [result, setResult] = useState<PaginatedResponse<BookingDto> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pollingBookingId, setPollingBookingId] = useState<string | null>(null);
 
   const loadEvents = useCallback(async () => {
     try {
@@ -55,15 +56,54 @@ export default function App() {
     void loadBookings();
   }, [loadBookings]);
 
-  // Poll so PENDING bookings visibly settle to CONFIRMED/FAILED, and seat
-  // counts stay current, without the user refreshing.
+  // Scoped polling: after a booking is submitted, poll ONLY that specific booking's status
+  // every 1.5s, and STOP polling as soon as it leaves PENDING.
   useEffect(() => {
-    const id = setInterval(() => {
-      void loadBookings({ silent: true });
-      void loadEvents();
-    }, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [loadBookings, loadEvents]);
+    if (!pollingBookingId) return;
+
+    let isActive = true;
+    const runPoll = async () => {
+      try {
+        const booking = await fetchBookingById(pollingBookingId);
+        if (!isActive) return;
+
+        if (booking) {
+          // Update the single booking in our current paginated result list immediately
+          setResult((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              data: prev.data.map((b) => (b.id === booking.id ? booking : b)),
+            };
+          });
+
+          // Stop polling when it leaves PENDING
+          if (booking.status !== 'PENDING') {
+            setPollingBookingId(null);
+            // Refresh dashboard (silent) to ensure general counts and sibling pages match
+            void loadBookings({ silent: true });
+            void loadEvents();
+          }
+        }
+      } catch {
+        if (isActive) {
+          setPollingBookingId(null);
+        }
+      }
+    };
+
+    const timerId = setInterval(() => {
+      void runPoll();
+    }, 1500);
+
+    // Initial check right away
+    void runPoll();
+
+    return () => {
+      isActive = false;
+      clearInterval(timerId);
+    };
+  }, [pollingBookingId, loadBookings, loadEvents]);
 
   const onFilterChange = (next: { eventId?: number | ''; status?: string }) => {
     if (next.eventId !== undefined) setEventId(next.eventId);
@@ -76,6 +116,11 @@ export default function App() {
     void loadEvents();
   };
 
+  const handleBookingCreated = (bookingId: string) => {
+    setPollingBookingId(bookingId);
+    refreshAll();
+  };
+
   return (
     <div className="app">
       <header className="app__header">
@@ -83,14 +128,14 @@ export default function App() {
         <p className="app__subtitle">Book seats and watch bookings settle in real time.</p>
       </header>
 
-      <BookingForm events={events} onCreated={refreshAll} />
+      <BookingForm events={events} onCreated={handleBookingCreated} />
 
       <section className="panel">
         <div className="panel__head">
           <h2>Bookings</h2>
-          <button className="btn btn--ghost" onClick={refreshAll}>
+          <Button variant="ghost" onClick={refreshAll}>
             Refresh
-          </button>
+          </Button>
         </div>
 
         <FiltersBar events={events} eventId={eventId} status={status} onChange={onFilterChange} />
@@ -116,3 +161,4 @@ export default function App() {
     </div>
   );
 }
+

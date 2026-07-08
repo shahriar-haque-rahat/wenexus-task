@@ -1,6 +1,6 @@
 import type { BookingDto, CreateBookingInput, EventDto, PaginatedResponse } from './types';
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000';
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000';
 
 /** Unwraps a fetch Response, turning API error payloads into thrown Errors. */
 async function unwrap<T>(res: Response): Promise<T> {
@@ -49,3 +49,8 @@ export function createBooking(input: CreateBookingInput): Promise<BookingDto> {
     body: JSON.stringify(input),
   }).then((res) => unwrap<BookingDto>(res));
 }
+
+export function fetchBookingById(id: string): Promise<BookingDto> {
+  return fetch(`${BASE_URL}/bookings/${id}`).then((res) => unwrap<BookingDto>(res));
+}
+

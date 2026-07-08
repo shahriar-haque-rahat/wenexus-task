@@ -1,4 +1,5 @@
 import type { BookingStatus, EventDto } from '../types';
+import { Select } from './ui/Select';
 
 interface Props {
   events: EventDto[];
@@ -10,33 +11,41 @@ interface Props {
 const STATUSES: BookingStatus[] = ['PENDING', 'CONFIRMED', 'FAILED'];
 
 export function FiltersBar({ events, eventId, status, onChange }: Props) {
+  const eventOptions = [
+    { value: '' as const, label: 'All events' },
+    ...events.map((ev) => ({
+      value: ev.id,
+      label: ev.name,
+    })),
+  ];
+
+  const statusOptions = [
+    { value: '', label: 'All statuses' },
+    ...STATUSES.map((s) => ({
+      value: s,
+      label: s,
+    })),
+  ];
+
   return (
     <div className="filters">
-      <label className="field field--inline">
-        <span>Event</span>
-        <select
-          value={eventId}
-          onChange={(e) => onChange({ eventId: e.target.value === '' ? '' : Number(e.target.value) })}
-        >
-          <option value="">All events</option>
-          {events.map((ev) => (
-            <option key={ev.id} value={ev.id}>
-              {ev.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="field field--inline">
-        <span>Status</span>
-        <select value={status} onChange={(e) => onChange({ status: e.target.value })}>
-          <option value="">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        id="filter-event-select"
+        label="Event"
+        className="field--inline"
+        value={eventId}
+        options={eventOptions}
+        onChange={(val) => onChange({ eventId: val })}
+      />
+      <Select
+        id="filter-status-select"
+        label="Status"
+        className="field--inline"
+        value={status}
+        options={statusOptions}
+        onChange={(val) => onChange({ status: val as string })}
+      />
     </div>
   );
 }
+

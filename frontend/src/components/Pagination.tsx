@@ -1,3 +1,5 @@
+import { Button } from './ui/Button';
+
 interface Props {
   page: number;
   totalPages: number;
@@ -12,17 +14,18 @@ export function Pagination({ page, totalPages, total, onPage }: Props) {
         {total} booking{total === 1 ? '' : 's'} · page {page} of {Math.max(totalPages, 1)}
       </span>
       <div className="pagination__controls">
-        <button className="btn btn--ghost" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+        <Button variant="ghost" disabled={page <= 1} onClick={() => onPage(page - 1)}>
           Previous
-        </button>
-        <button
-          className="btn btn--ghost"
+        </Button>
+        <Button
+          variant="ghost"
           disabled={page >= totalPages}
           onClick={() => onPage(page + 1)}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
+
